@@ -1,33 +1,4 @@
-/* src/App.css */
-
-body {
-  font-family: sans-serif;
-  margin: 0;
-  background: #f0f2f5;
-}
-
-.login, .chat-room {
-  max-width: 600px;
-  margin: 50px auto;
-  padding: 20px;
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-}
-
-.login h2 {
-  text-align: center;
-}
-
-button {
-  padding: 10px 20px;
-  margin-top: 10px;
-  cursor: pointer;
-  background: #007bff;
-  color: white;
-  border: none;
-  border-radius: 5px;
-}
+/* Styles moved to index.css - this file is no longer needed */
 
 button:hover {
   background: #0056b3;
