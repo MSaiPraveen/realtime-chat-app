@@ -5,14 +5,14 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-// 🔥 Replace the below config with *your actual config* from Firebase Console
+// 🔥 Firebase config from environment variables
 const firebaseConfig = {
-  apiKey: "AIzaSyAfmMI9mBbr1zFWO9cDwIPW8xvamUJMvss",
-  authDomain: "realtime-chat-app-8131a.firebaseapp.com",
-  projectId: "realtime-chat-app-8131a",
-  storageBucket: "realtime-chat-app-8131a.firebasestorage.app",
-  messagingSenderId: "516529109112",
-  appId: "1:516529109112:web:ceba3056d34f6afe05158d"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
