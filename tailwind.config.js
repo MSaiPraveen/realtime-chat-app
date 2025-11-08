@@ -7,8 +7,8 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: "#6366f1",
-        secondary: "#ec4899",
+        primary: "#ec21a9ff",
+        secondary: "#bce137ff",
       },
       animation: {
         fadeIn: "fadeIn 0.5s ease-in",

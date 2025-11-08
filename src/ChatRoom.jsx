@@ -7,6 +7,9 @@ import {
   addDoc,
   serverTimestamp,
   onSnapshot,
+  updateDoc,
+  deleteDoc,
+  doc,
 } from 'firebase/firestore';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import Picker from 'emoji-picker-react';
@@ -16,6 +19,9 @@ const ChatRoom = () => {
   const [input, setInput] = useState('');
   const [user, setUser] = useState(null);
   const [showPicker, setShowPicker] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [editText, setEditText] = useState('');
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const messagesEndRef = useRef(null);
 
@@ -47,11 +53,46 @@ const ChatRoom = () => {
         photoURL: user.photoURL || 'https://via.placeholder.com/40',
         displayName: user.displayName || 'Anonymous',
         createdAt: serverTimestamp(),
+        edited: false,
       });
       setInput('');
       setShowPicker(false);
     } catch (error) {
       console.error('Error sending message:', error);
+    }
+  };
+
+  const handleEditMessage = (msgId, msgText) => {
+    setEditingId(msgId);
+    setEditText(msgText);
+    setShowEditModal(true);
+  };
+
+  const saveEditMessage = async () => {
+    if (!editText.trim()) return;
+
+    try {
+      const msgRef = doc(db, 'messages', editingId);
+      await updateDoc(msgRef, {
+        text: editText,
+        edited: true,
+        editedAt: serverTimestamp(),
+      });
+      setShowEditModal(false);
+      setEditingId(null);
+      setEditText('');
+    } catch (error) {
+      console.error('Error updating message:', error);
+    }
+  };
+
+  const handleDeleteMessage = async (msgId) => {
+    if (window.confirm('Are you sure you want to delete this message?')) {
+      try {
+        await deleteDoc(doc(db, 'messages', msgId));
+      } catch (error) {
+        console.error('Error deleting message:', error);
+      }
     }
   };
 
@@ -122,7 +163,7 @@ const ChatRoom = () => {
           messages.map(msg => (
             <div
               key={msg.id}
-              className={`flex gap-3 animate-fadeIn ${msg.uid === user?.uid ? 'justify-end' : 'justify-start'}`}
+              className={`flex gap-3 animate-fadeIn group ${msg.uid === user?.uid ? 'justify-end' : 'justify-start'}`}
             >
               {msg.uid !== user?.uid && (
                 <img
@@ -135,8 +176,35 @@ const ChatRoom = () => {
                 <p className="text-xs text-white/70 mb-2 px-3">
                   {msg.displayName}
                 </p>
-                <div className={msg.uid === user?.uid ? 'message-sent' : 'message-received'}>
+                <div className={`relative ${msg.uid === user?.uid ? 'message-sent' : 'message-received'}`}>
                   <p className="text-sm leading-relaxed">{msg.text}</p>
+                  {msg.edited && (
+                    <span className="text-xs opacity-70 mt-1">(edited)</span>
+                  )}
+
+                  {/* Edit/Delete buttons - Only for own messages */}
+                  {msg.uid === user?.uid && (
+                    <div className="absolute -left-20 top-0 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => handleEditMessage(msg.id, msg.text)}
+                        className="p-1 bg-blue-500 hover:bg-blue-600 rounded-md text-white text-xs"
+                        title="Edit message"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => handleDeleteMessage(msg.id)}
+                        className="p-1 bg-red-500 hover:bg-red-600 rounded-md text-white text-xs"
+                        title="Delete message"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <p className="text-xs text-white/50 mt-2 px-3">
                   {msg.createdAt?.toDate?.().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || 'just now'}
@@ -154,6 +222,39 @@ const ChatRoom = () => {
         )}
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Edit Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 max-w-md w-full mx-4">
+            <h3 className="text-xl font-bold text-white mb-4">Edit Message</h3>
+            <textarea
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              className="input-field w-full h-24 resize-none mb-4"
+              placeholder="Edit your message..."
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditingId(null);
+                  setEditText('');
+                }}
+                className="btn-secondary flex-1"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveEditMessage}
+                className="btn-primary flex-1"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Input area */}
       <div className="bg-white/5 backdrop-blur-xl border-t border-white/10 px-6 py-4">
