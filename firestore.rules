@@ -1,11 +1,28 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Legacy messages collection (for backwards compatibility)
     match /messages/{document=**} {
       allow read: if request.auth != null;
       allow create: if request.auth != null;
       allow update: if request.auth.uid == resource.data.uid;
       allow delete: if request.auth.uid == resource.data.uid;
+    }
+
+    // Rooms collection
+    match /rooms/{roomId} {
+      allow read: if request.auth != null && request.auth.uid in resource.data.members;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && request.auth.uid in resource.data.members;
+      allow delete: if request.auth != null && request.auth.uid == resource.data.createdBy;
+
+      // Messages within each room
+      match /messages/{messageId} {
+        allow read: if request.auth != null && request.auth.uid in get(/databases/$(database)/documents/rooms/$(roomId)).data.members;
+        allow create: if request.auth != null && request.auth.uid in get(/databases/$(database)/documents/rooms/$(roomId)).data.members;
+        allow update: if request.auth != null && request.auth.uid == resource.data.uid;
+        allow delete: if request.auth != null && request.auth.uid == resource.data.uid;
+      }
     }
   }
 }

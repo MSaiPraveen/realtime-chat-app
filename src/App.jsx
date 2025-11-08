@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "./firebase";
 import Login from "./Login";
@@ -6,6 +6,7 @@ import ChatRoom from "./ChatRoom";
 
 const App = () => {
   const [user, loading] = useAuthState(auth);
+  const [selectedRoomId, setSelectedRoomId] = useState(null);
 
   if (loading) {
     return (
@@ -18,7 +19,14 @@ const App = () => {
     );
   }
 
-  return user ? <ChatRoom /> : <Login />;
+  return user ? (
+    <ChatRoom 
+      roomId={selectedRoomId} 
+      onRoomChange={setSelectedRoomId} 
+    /> 
+  ) : (
+    <Login />
+  );
 };
 
 export default App;
